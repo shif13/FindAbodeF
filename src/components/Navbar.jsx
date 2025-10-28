@@ -1,20 +1,25 @@
-// frontend/src/components/Navbar.jsx
+// frontend/src/components/Navbar.jsx (UPDATED)
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { FaHome, FaHeart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { useUser } from '../context/UserContext';
+import { FaHome, FaHeart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
-  const { currentUser, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { userData, canPostProperty, isAdmin, loading } = useUser();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
+      toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
+      toast.error('Logout failed');
     }
   };
 
@@ -39,15 +44,18 @@ const Navbar = () => {
               Properties
             </Link>
 
-            {currentUser ? (
+            {user ? (
               <>
-                <Link 
-                  to="/post-property" 
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  <FaPlus />
-                  <span>Post Property</span>
-                </Link>
+                {/* Only show Post Property for Owner/Agent/Builder */}
+                {!loading && canPostProperty() && (
+                  <Link 
+                    to="/post-property" 
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    <FaPlus />
+                    <span>Post Property</span>
+                  </Link>
+                )}
                 
                 <Link to="/wishlist" className="text-gray-700 hover:text-blue-600 transition">
                   <FaHeart className="text-xl" />
@@ -56,20 +64,57 @@ const Navbar = () => {
                 <div className="relative group">
                   <button className="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
                     <FaUser />
-                    <span>Account</span>
+                    <span className="flex items-center gap-2">
+                      {userData?.name || user.displayName || 'Account'}
+                      {userData?.isVerified && (
+                        <FaCheckCircle className="text-blue-600 text-sm" title="Verified" />
+                      )}
+                    </span>
                   </button>
                   
                   {/* Dropdown */}
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    {/* User Info */}
+                    {userData && (
+                      <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm font-medium text-gray-900">{userData.name}</p>
+                        <p className="text-xs text-gray-500 capitalize">
+                          {userData.userType}
+                          {userData.userType === 'agent' && ' 🤝'}
+                          {userData.userType === 'builder' && ' 🏗️'}
+                          {userData.userType === 'owner' && ' 🏡'}
+                        </p>
+                      </div>
+                    )}
+                    
                     <Link 
                       to="/profile" 
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                     >
                       My Profile
                     </Link>
+                    
+                    {userData?.userType === 'owner' || userData?.userType === 'agent' || userData?.userType === 'builder' ? (
+                      <Link 
+                        to="/my-properties" 
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      >
+                        My Properties
+                      </Link>
+                    ) : null}
+                    
+                    {isAdmin() && (
+                      <Link 
+                        to="/admin" 
+                        className="block px-4 py-2 text-purple-600 hover:bg-gray-100 font-semibold"
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
+                    
                     <button 
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 border-t border-gray-200"
                     >
                       Logout
                     </button>
@@ -121,15 +166,17 @@ const Navbar = () => {
               Properties
             </Link>
 
-            {currentUser ? (
+            {user ? (
               <>
-                <Link 
-                  to="/post-property" 
-                  className="block text-blue-600 font-semibold"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Post Property
-                </Link>
+                {!loading && canPostProperty() && (
+                  <Link 
+                    to="/post-property" 
+                    className="block text-blue-600 font-semibold"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Post Property
+                  </Link>
+                )}
                 <Link 
                   to="/wishlist" 
                   className="block text-gray-700"
@@ -144,6 +191,15 @@ const Navbar = () => {
                 >
                   Profile
                 </Link>
+                {isAdmin() && (
+                  <Link 
+                    to="/admin" 
+                    className="block text-purple-600 font-semibold"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <button 
                   onClick={() => {
                     handleLogout();
