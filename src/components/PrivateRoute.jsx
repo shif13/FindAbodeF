@@ -1,9 +1,9 @@
-// frontend/src/components/PrivateRoute.jsx
+// frontend/src/components/PrivateRoute.jsx - FIXED
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const PrivateRoute = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+  const { user, loading } = useAuth(); // Changed from currentUser to user
 
   if (loading) {
     return (
@@ -13,7 +13,12 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  return currentUser ? children : <Navigate to="/login" />;
+  // Check if user is logged in
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
 };
 
 export default PrivateRoute;

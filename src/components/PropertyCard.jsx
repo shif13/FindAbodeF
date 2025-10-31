@@ -1,3 +1,4 @@
+// frontend/src/components/PropertyCard.jsx - FIXED TO SHOW CORRECT DATA
 import { Link } from 'react-router-dom';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useState } from 'react';
@@ -47,15 +48,27 @@ const PropertyCard = ({ property, onWishlistChange }) => {
     }).format(price);
   };
 
+  // Determine which price to show based on listing type
+  const displayPrice = property.listingType === 'rent' 
+    ? property.rentPerMonth 
+    : property.price;
+
   return (
     <Link to={`/property/${property.id}`} className="block">
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
         {/* Image */}
         <div className="relative h-48 overflow-hidden">
           <img
-            src={property.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
+            src={
+              property.images && property.images.length > 0 
+                ? (typeof property.images === 'string' ? JSON.parse(property.images)[0] : property.images[0])
+                : 'https://via.placeholder.com/400x300?text=No+Image'
+            }
             alt={property.title}
             className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+            }}
           />
           
           {/* Wishlist Button */}
@@ -74,9 +87,9 @@ const PropertyCard = ({ property, onWishlistChange }) => {
           {/* Property Type Badge */}
           <div className="absolute top-3 left-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
-              property.type === 'rent' ? 'bg-blue-600' : 'bg-green-600'
+              property.listingType === 'rent' ? 'bg-blue-600' : 'bg-green-600'
             }`}>
-              For {property.type === 'rent' ? 'Rent' : 'Sale'}
+              For {property.listingType === 'rent' ? 'Rent' : 'Sale'}
             </span>
           </div>
         </div>
@@ -86,9 +99,9 @@ const PropertyCard = ({ property, onWishlistChange }) => {
           {/* Price */}
           <div className="mb-2">
             <span className="text-2xl font-bold text-blue-600">
-              {formatPrice(property.price)}
+              {displayPrice ? formatPrice(displayPrice) : 'Price Not Available'}
             </span>
-            {property.type === 'rent' && (
+            {property.listingType === 'rent' && (
               <span className="text-gray-500 text-sm">/month</span>
             )}
           </div>
@@ -100,25 +113,33 @@ const PropertyCard = ({ property, onWishlistChange }) => {
 
           {/* Location */}
           <div className="flex items-center text-gray-600 mb-3">
-            <FaMapMarkerAlt className="mr-1 text-sm" />
-            <span className="text-sm line-clamp-1">{property.city}, {property.state}</span>
+            <FaMapMarkerAlt className="mr-1 text-sm flex-shrink-0" />
+            <span className="text-sm line-clamp-1">
+              {property.city}, {property.state}
+            </span>
           </div>
 
           {/* Property Details */}
           <div className="flex items-center justify-between text-gray-600 border-t pt-3">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <FaBed className="mr-1" />
-                <span className="text-sm">{property.bedrooms}</span>
-              </div>
-              <div className="flex items-center">
-                <FaBath className="mr-1" />
-                <span className="text-sm">{property.bathrooms}</span>
-              </div>
-              <div className="flex items-center">
-                <FaRulerCombined className="mr-1" />
-                <span className="text-sm">{property.area} sqft</span>
-              </div>
+              {property.bedrooms > 0 && (
+                <div className="flex items-center">
+                  <FaBed className="mr-1" />
+                  <span className="text-sm">{property.bedrooms}</span>
+                </div>
+              )}
+              {property.bathrooms > 0 && (
+                <div className="flex items-center">
+                  <FaBath className="mr-1" />
+                  <span className="text-sm">{property.bathrooms}</span>
+                </div>
+              )}
+              {property.area && (
+                <div className="flex items-center">
+                  <FaRulerCombined className="mr-1" />
+                  <span className="text-sm">{property.area} sqft</span>
+                </div>
+              )}
             </div>
           </div>
 

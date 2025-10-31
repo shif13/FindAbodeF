@@ -137,3 +137,31 @@ export const checkWishlist = async (propertyId, token) => {
     throw error.response?.data || error.message;
   }
 };
+
+// Admin: Approve property
+export const approveProperty = async (propertyId, token) => {
+  try {
+    const response = await axios.patch(
+      `${API_URL}/properties/admin/${propertyId}/approve`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Admin: Reject property
+export const rejectProperty = async (propertyId, reason, token) => {
+  try {
+    const response = await axios.patch(
+      `${API_URL}/properties/admin/${propertyId}/reject`,
+      { reason },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
