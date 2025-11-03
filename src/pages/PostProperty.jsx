@@ -160,7 +160,7 @@ const PostProperty = () => {
 
     // Validation
     if (imageFiles.length === 0) {
-      toast.error('Please upload at least one image');
+      toast.warn('Please upload at least one image');
       return;
     }
 
@@ -461,40 +461,46 @@ const PostProperty = () => {
           )}
 
           {/* Step 3: Property Details */}
+         {/* Step 3: Property Details */}
           {step === 3 && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Property Details</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FaBed className="inline mr-1" /> Bedrooms *
-                  </label>
-                  <input
-                    type="number"
-                    name="bedrooms"
-                    required
-                    value={formData.bedrooms}
-                    onChange={handleChange}
-                    min="0"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                {/* Show Bedrooms/Bathrooms only for residential properties */}
+                {formData.propertyType !== 'commercial' && formData.propertyType !== 'plot' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FaBed className="inline mr-1" /> Bedrooms *
+                      </label>
+                      <input
+                        type="number"
+                        name="bedrooms"
+                        required
+                        value={formData.bedrooms}
+                        onChange={handleChange}
+                        min="0"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FaBath className="inline mr-1" /> Bathrooms *
-                  </label>
-                  <input
-                    type="number"
-                    name="bathrooms"
-                    required
-                    value={formData.bathrooms}
-                    onChange={handleChange}
-                    min="0"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FaBath className="inline mr-1" /> Bathrooms *
+                      </label>
+                      <input
+                        type="number"
+                        name="bathrooms"
+                        required
+                        value={formData.bathrooms}
+                        onChange={handleChange}
+                        min="0"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -511,49 +517,57 @@ const PostProperty = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Floor</label>
-                  <input
-                    type="text"
-                    name="floor"
-                    value={formData.floor}
-                    onChange={handleChange}
-                    placeholder="e.g., Ground, 2nd"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                {/* Floor details - only for apartments and commercial */}
+                {(formData.propertyType === 'apartment' || formData.propertyType === 'commercial') && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Floor</label>
+                      <input
+                        type="text"
+                        name="floor"
+                        value={formData.floor}
+                        onChange={handleChange}
+                        placeholder="e.g., Ground, 2nd"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Total Floors</label>
-                  <input
-                    type="number"
-                    name="totalFloors"
-                    value={formData.totalFloors}
-                    onChange={handleChange}
-                    min="0"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Total Floors</label>
+                      <input
+                        type="number"
+                        name="totalFloors"
+                        value={formData.totalFloors}
+                        onChange={handleChange}
+                        min="0"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Facing</label>
-                  <select
-                    name="facing"
-                    value={formData.facing}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select</option>
-                    <option value="North">North</option>
-                    <option value="South">South</option>
-                    <option value="East">East</option>
-                    <option value="West">West</option>
-                    <option value="North-East">North-East</option>
-                    <option value="North-West">North-West</option>
-                    <option value="South-East">South-East</option>
-                    <option value="South-West">South-West</option>
-                  </select>
-                </div>
+                {/* Facing - not for commercial or plot */}
+                {formData.propertyType !== 'commercial' && formData.propertyType !== 'plot' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Facing</label>
+                    <select
+                      name="facing"
+                      value={formData.facing}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select</option>
+                      <option value="North">North</option>
+                      <option value="South">South</option>
+                      <option value="East">East</option>
+                      <option value="West">West</option>
+                      <option value="North-East">North-East</option>
+                      <option value="North-West">North-West</option>
+                      <option value="South-East">South-East</option>
+                      <option value="South-West">South-West</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Age of Property</label>

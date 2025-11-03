@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - COMPLETE WITH ADMIN PANEL
+// frontend/src/App.jsx - UPDATED ADMIN ROUTE
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,11 +18,9 @@ import Listings from './pages/Listings';
 import PropertyDetails from './pages/PropertyDetails';
 import PendingApproval from './pages/PendingApproval';
 
-// Signup Flow - Role Selection
+// Signup Flow
 import RoleSelection from './pages/RoleSelection';
 import ProviderTypeSelection from './pages/ProviderTypeSelection';
-
-// Signup Forms
 import SeekerSignup from './pages/SeekerSignup';
 import ProviderOwnerSignup from './pages/ProviderOwnerSignup';
 import ProviderAgentSignup from './pages/ProviderAgentSignup';
@@ -47,18 +45,14 @@ function App() {
             
             <main className="flex-grow">
               <Routes>
-                {/* ============================================ */}
                 {/* PUBLIC ROUTES */}
-                {/* ============================================ */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<UnifiedAuth />} />
                 <Route path="/listings" element={<Listings />} />
                 <Route path="/property/:id" element={<PropertyDetails />} />
                 <Route path="/pending-approval" element={<PendingApproval />} />
                 
-                {/* ============================================ */}
                 {/* SIGNUP FLOW */}
-                {/* ============================================ */}
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/signup/role-selection" element={<RoleSelection />} />
                 <Route path="/signup/seeker" element={<SeekerSignup />} />
@@ -67,9 +61,7 @@ function App() {
                 <Route path="/signup/provider/agent" element={<ProviderAgentSignup />} />
                 <Route path="/signup/provider/builder" element={<ProviderBuilderSignup />} />
                 
-                {/* ============================================ */}
-                {/* PROTECTED ROUTES (Authentication Required) */}
-                {/* ============================================ */}
+                {/* PROTECTED ROUTES */}
                 <Route 
                   path="/profile" 
                   element={
@@ -106,21 +98,17 @@ function App() {
                   } 
                 />
                 
-                {/* ============================================ */}
-                {/* ADMIN PANEL (Admin Only) */}
-                {/* ============================================ */}
+                {/* ADMIN PANEL (Admin Only) - UPDATED */}
                 <Route 
                   path="/admin" 
                   element={
-                    <PrivateRoute>
+                    <PrivateRoute adminOnly={true}>
                       <AdminPanel />
                     </PrivateRoute>
                   } 
                 />
                 
-                {/* ============================================ */}
                 {/* 404 PAGE */}
-                {/* ============================================ */}
                 <Route 
                   path="*" 
                   element={

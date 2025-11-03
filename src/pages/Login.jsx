@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getUserProfile } from '../api/users';
 
 const UnifiedAuth = () => {
   const [view, setView] = useState('login'); // 'login', 'forgot', 'verify'
@@ -17,6 +18,29 @@ const UnifiedAuth = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Helper function to check user type and redirect
+  const checkUserTypeAndRedirect = async (firebaseUser) => {
+    try {
+      // Get token
+      const token = await firebaseUser.getIdToken();
+      
+      // Fetch user profile from MySQL
+      const response = await getUserProfile(firebaseUser.uid, token);
+      const userData = response.data;
+      
+      // Redirect based on userType
+      if (userData.userType === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Default redirect if error
+      navigate('/');
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -26,7 +50,10 @@ const UnifiedAuth = () => {
 
     if (result.success) {
       setMessage({ type: 'success', text: result.message });
-      setTimeout(() => navigate('/'), 1500);
+      // Wait a bit then check user type and redirect
+      setTimeout(async () => {
+        await checkUserTypeAndRedirect(result.user);
+      }, 1500);
     } else {
       setMessage({ type: 'error', text: result.message });
     }
@@ -42,7 +69,9 @@ const UnifiedAuth = () => {
 
     if (result.success) {
       setMessage({ type: 'success', text: result.message });
-      setTimeout(() => navigate('/'), 1000);
+      setTimeout(async () => {
+        await checkUserTypeAndRedirect(result.user);
+      }, 1000);
     } else {
       setMessage({ type: 'error', text: result.message });
     }
@@ -58,7 +87,9 @@ const UnifiedAuth = () => {
 
     if (result.success) {
       setMessage({ type: 'success', text: result.message });
-      setTimeout(() => navigate('/'), 1000);
+      setTimeout(async () => {
+        await checkUserTypeAndRedirect(result.user);
+      }, 1000);
     } else {
       setMessage({ type: 'error', text: result.message });
     }
