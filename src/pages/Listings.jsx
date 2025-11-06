@@ -1,4 +1,4 @@
-// frontend/src/pages/Listings.jsx - FIXED SEARCH FUNCTIONALITY
+// frontend/src/pages/Listings.jsx - COMPLETE FIXED VERSION
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getAllProperties } from '../api/properties';
@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+  const [compareList, setCompareList] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -52,11 +52,11 @@ const Listings = () => {
       if (filters.maxPrice) params.maxPrice = filters.maxPrice;
       if (filters.bedrooms) params.bedrooms = filters.bedrooms;
 
-      console.log('🔍 Fetching with params:', params); // Debug log
+      console.log('🔍 Fetching with params:', params);
 
       const response = await getAllProperties(params);
       
-      console.log('✅ API Response:', response); // Debug log
+      console.log('✅ API Response:', response);
       
       setProperties(response.data || []);
       setPagination(response.pagination || { page: 1, pages: 1, total: 0 });
@@ -69,7 +69,7 @@ const Listings = () => {
   };
 
   const handleSearch = (newFilters) => {
-    console.log('🔍 New filters:', newFilters); // Debug log
+    console.log('🔍 New filters:', newFilters);
     
     setFilters(newFilters);
     
@@ -103,11 +103,11 @@ const Listings = () => {
       if (filterValues.maxPrice) params.maxPrice = filterValues.maxPrice;
       if (filterValues.bedrooms) params.bedrooms = filterValues.bedrooms;
 
-      console.log('🔍 Searching with params:', params); // Debug log
+      console.log('🔍 Searching with params:', params);
 
       const response = await getAllProperties(params);
       
-      console.log('✅ Search results:', response); // Debug log
+      console.log('✅ Search results:', response);
       
       setProperties(response.data || []);
       setPagination(response.pagination || { page: 1, pages: 1, total: 0 });
@@ -152,6 +152,20 @@ const Listings = () => {
       });
   };
 
+  const handleCompareToggle = (propertyId) => {
+    if (compareList.includes(propertyId)) {
+      setCompareList(compareList.filter(id => id !== propertyId));
+      toast.info('Removed from comparison');
+    } else {
+      if (compareList.length >= 3) {
+        toast.error('You can compare maximum 3 properties');
+        return;
+      }
+      setCompareList([...compareList, propertyId]);
+      toast.success('Added to comparison');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -170,10 +184,8 @@ const Listings = () => {
 
         {/* Properties Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-gray-200 h-96 rounded-lg animate-pulse"></div>
-            ))}
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : properties.length > 0 ? (
           <>
@@ -183,9 +195,21 @@ const Listings = () => {
                   key={property.id} 
                   property={property}
                   onWishlistChange={() => fetchProperties(pagination.page)}
+                  compareList={compareList}
+                  onCompareToggle={handleCompareToggle}
                 />
               ))}
             </div>
+
+            {/* Compare Button - Fixed Position */}
+            {compareList.length >= 2 && (
+              <button
+                onClick={() => navigate(`/compare?ids=${compareList.join(',')}`)}
+                className="fixed bottom-8 right-8 bg-purple-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-purple-700 z-50 flex items-center gap-3 animate-bounce"
+              >
+                <span className="font-bold">Compare ({compareList.length})</span>
+              </button>
+            )}
 
             {/* Pagination */}
             {pagination.pages > 1 && (

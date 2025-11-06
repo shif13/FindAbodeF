@@ -1,4 +1,4 @@
-// frontend/src/components/PropertyCard.jsx - FIXED TO SHOW CORRECT DATA
+// frontend/src/components/PropertyCard.jsx - FIXED VERSION
 import { Link } from 'react-router-dom';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useState } from 'react';
@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { addToWishlist, removeFromWishlist } from '../api/properties';
 import { toast } from 'react-toastify';
 
-const PropertyCard = ({ property, onWishlistChange }) => {
+const PropertyCard = ({ property, onWishlistChange, compareList, onCompareToggle }) => {
   const [isWishlisted, setIsWishlisted] = useState(property.isWishlisted || false);
   const [loading, setLoading] = useState(false);
   const { user, getToken } = useAuth();
@@ -55,7 +55,7 @@ const PropertyCard = ({ property, onWishlistChange }) => {
 
   return (
     <Link to={`/property/${property.id}`} className="block">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
         {/* Image */}
         <div className="relative h-48 overflow-hidden">
           <img
@@ -66,9 +66,6 @@ const PropertyCard = ({ property, onWishlistChange }) => {
             }
             alt={property.title}
             className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-            }}
           />
           
           {/* Wishlist Button */}
@@ -84,8 +81,29 @@ const PropertyCard = ({ property, onWishlistChange }) => {
             )}
           </button>
 
+          {/* Compare Checkbox */}
+          {onCompareToggle && (
+            <div 
+              className="absolute top-3 left-3 bg-white p-2 rounded-lg shadow-md"
+              onClick={(e) => e.preventDefault()}
+            >
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={compareList?.includes(property.id) || false}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onCompareToggle(property.id);
+                  }}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-xs font-medium text-gray-700">Compare</span>
+              </label>
+            </div>
+          )}
+
           {/* Property Type Badge */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute bottom-3 left-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
               property.listingType === 'rent' ? 'bg-blue-600' : 'bg-green-600'
             }`}>

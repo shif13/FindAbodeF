@@ -1,14 +1,14 @@
-// frontend/src/components/PrivateRoute.jsx - UPDATED
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUser } from '../context/UserContext';
+import { toast } from 'react-toastify';
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
-  const { user, loading: authLoading } = useAuth();
-  const { userData, loading: userLoading, isAdmin } = useUser();
+  const { user, loading } = useAuth();
+  const { userData, isAdmin, loading: userLoading } = useUser();
 
-  // Show loading while checking auth
-  if (authLoading || userLoading) {
+  // Wait for both auth and user data
+  if (loading || userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -24,8 +24,9 @@ const PrivateRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check admin-only routes
+  // Check admin access if required
   if (adminOnly && !isAdmin()) {
+    toast.error('Access denied. Admin only.');
     return <Navigate to="/" replace />;
   }
 
