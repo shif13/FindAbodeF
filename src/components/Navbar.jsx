@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -11,6 +10,8 @@ const Navbar = () => {
   const { userData, canPostProperty, isAdmin, loading } = useUser();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownTimeout, setDropdownTimeout] = useState(null);
 
   const handleLogout = async () => {
     try {
@@ -21,6 +22,21 @@ const Navbar = () => {
       console.error('Logout failed:', error);
       toast.error('Logout failed');
     }
+  };
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout);
+      setDropdownTimeout(null);
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 200); // 200ms delay before closing
+    setDropdownTimeout(timeout);
   };
 
   return (
@@ -57,14 +73,23 @@ const Navbar = () => {
             {user ? (
               <>
                 {!loading && canPostProperty() && (
-                  <Link 
-                    to="/post-property" 
-                    className="text-[#364958] hover:text-[#55828B] transition-colors font-medium relative group flex items-center gap-2"
-                  >
-                    <FaPlus className="text-sm" />
-                    <span>Post Property</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#87BBA2] group-hover:w-full transition-all duration-300"></span>
-                  </Link>
+                  <>
+                    <Link 
+                      to="/my-properties" 
+                      className="text-[#364958] hover:text-[#55828B] transition-colors font-medium relative group"
+                    >
+                      My Properties
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#87BBA2] group-hover:w-full transition-all duration-300"></span>
+                    </Link>
+                    <Link 
+                      to="/post-property" 
+                      className="text-[#364958] hover:text-[#55828B] transition-colors font-medium relative group flex items-center gap-2"
+                    >
+                      <FaPlus className="text-sm" />
+                      <span>Post Property</span>
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#87BBA2] group-hover:w-full transition-all duration-300"></span>
+                    </Link>
+                  </>
                 )}
                 
                 <Link 
@@ -75,8 +100,13 @@ const Navbar = () => {
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#C17767] rounded-full animate-pulse"></span>
                 </Link>
 
-                <div className="relative group">
-                  <button className="flex items-center space-x-2 text-[#364958] hover:text-[#55828B] font-medium">
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    className="flex items-center space-x-2 text-[#364958] hover:text-[#55828B] font-medium"
+                  >
                     <div className="w-10 h-10 bg-gradient-to-br from-[#C9E4CA] to-[#87BBA2] rounded-full flex items-center justify-center shadow-sm">
                       <FaUser className="text-[#3B6064]" />
                     </div>
@@ -89,51 +119,53 @@ const Navbar = () => {
                   </button>
                   
                   {/* Dropdown */}
-                  <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-[#C9E4CA]/50 overflow-hidden">
-                    {userData && (
-                      <div className="px-5 py-4 bg-gradient-to-br from-[#F5F1E8] to-[#C9E4CA]/20 border-b border-[#C9E4CA]/40">
-                        <p className="text-base font-bold text-[#364958]">{userData.name}</p>
-                        <p className="text-sm text-[#55828B] capitalize font-medium mt-1">
-                          {userData.userType}
-                          {userData.userType === 'agent' && ' 🤝'}
-                          {userData.userType === 'builder' && ' 🏗️'}
-                          {userData.userType === 'owner' && ' 🏡'}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <Link 
-                      to="/profile" 
-                      className="block px-5 py-3 text-[#364958] hover:bg-[#F5F1E8] transition-colors font-medium"
+                  {isDropdownOpen && (
+                    <div 
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                      className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-[#C9E4CA]/50 overflow-hidden z-[100]"
                     >
-                      My Profile
-                    </Link>
-                    
-                    {(userData?.userType === 'owner' || userData?.userType === 'agent' || userData?.userType === 'builder') && (
+                      {userData && (
+                        <div className="px-5 py-4 bg-gradient-to-br from-[#F5F1E8] to-[#C9E4CA]/20 border-b border-[#C9E4CA]/40">
+                          <p className="text-base font-bold text-[#364958]">{userData.name}</p>
+                          <p className="text-sm text-[#55828B] capitalize font-medium mt-1">
+                            {userData.userType}
+                            {userData.userType === 'agent' && ' 🤝'}
+                            {userData.userType === 'builder' && ' 🏗️'}
+                            {userData.userType === 'owner' && ' 🏡'}
+                          </p>
+                        </div>
+                      )}
+                      
                       <Link 
-                        to="/my-properties" 
+                        to="/profile" 
                         className="block px-5 py-3 text-[#364958] hover:bg-[#F5F1E8] transition-colors font-medium"
+                        onClick={() => setIsDropdownOpen(false)}
                       >
-                        My Properties
+                        My Profile
                       </Link>
-                    )}
-                    
-                    {isAdmin() && (
-                      <Link 
-                        to="/admin" 
-                        className="block px-5 py-3 text-[#55828B] hover:bg-[#F5F1E8] font-bold transition-colors"
+                      
+                      {isAdmin() && (
+                        <Link 
+                          to="/admin" 
+                          className="block px-5 py-3 text-[#55828B] hover:bg-[#F5F1E8] font-bold transition-colors"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          Admin Panel
+                        </Link>
+                      )}
+                      
+                      <button 
+                        onClick={() => {
+                          handleLogout();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-5 py-3 text-[#C17767] hover:bg-[#F5F1E8] border-t border-[#C9E4CA]/40 font-medium transition-colors"
                       >
-                        Admin Panel
-                      </Link>
-                    )}
-                    
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full text-left px-5 py-3 text-[#C17767] hover:bg-[#F5F1E8] border-t border-[#C9E4CA]/40 font-medium transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -184,16 +216,25 @@ const Navbar = () => {
             {user ? (
               <>
                 {!loading && canPostProperty() && (
-                  <Link 
-                    to="/post-property" 
-                    className="block text-[#364958] hover:text-[#55828B] font-medium py-2 px-4 rounded-lg hover:bg-[#C9E4CA]/20 transition-all"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <FaPlus className="text-sm" />
-                      Post Property
-                    </span>
-                  </Link>
+                  <>
+                    <Link 
+                      to="/my-properties" 
+                      className="block text-[#364958] hover:text-[#55828B] font-medium py-2 px-4 rounded-lg hover:bg-[#C9E4CA]/20 transition-all"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Properties
+                    </Link>
+                    <Link 
+                      to="/post-property" 
+                      className="block text-[#364958] hover:text-[#55828B] font-medium py-2 px-4 rounded-lg hover:bg-[#C9E4CA]/20 transition-all"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <FaPlus className="text-sm" />
+                        Post Property
+                      </span>
+                    </Link>
+                  </>
                 )}
                 <Link 
                   to="/wishlist" 

@@ -5,6 +5,8 @@ import { useUser } from '../context/UserContext';
 import { getPropertyById, updateProperty } from '../api/properties';
 import { uploadMultipleImages } from '../firebase/cloudinary';
 import { toast } from 'react-toastify';
+import { getUserProfile } from '../api/users';
+
 import { 
   FaHome, FaMapMarkerAlt, FaRupeeSign, FaBed, FaBath, 
   FaRulerCombined, FaImage, FaCheckCircle, FaTimes,

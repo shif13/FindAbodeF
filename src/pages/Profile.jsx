@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useUser } from '../context/UserContext';
 import { updateUserProfile } from '../api/users';
-import { getUserProperties } from '../api/properties';
+import { getUserProperties, getWishlist } from '../api/properties';
 import { toast } from 'react-toastify';
 import { 
   FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, 
   FaEdit, FaSave, FaTimes, FaCheckCircle, 
   FaBuilding, FaIdCard, FaClock, FaShieldAlt,
   FaKey, FaTrash, FaSignOutAlt, FaHome, FaEye, FaEnvelopeOpen,
-  FaTimesCircle, FaExclamationTriangle
+  FaTimesCircle, FaExclamationTriangle, FaHeart
 } from 'react-icons/fa';
 
 const Profile = () => {
@@ -25,7 +25,8 @@ const Profile = () => {
   const [stats, setStats] = useState({
     totalProperties: 0,
     totalViews: 0,
-    totalContacts: 0
+    totalContacts: 0,
+    totalWishlist: 0
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
@@ -51,6 +52,9 @@ const Profile = () => {
       if (isProvider()) {
         fetchStatistics();
       }
+      
+      // Fetch wishlist count for all users
+      fetchWishlistCount();
     }
   }, [userData]);
 
@@ -63,13 +67,29 @@ const Profile = () => {
       const totalViews = properties.reduce((sum, prop) => sum + (prop.views || 0), 0);
       const totalContacts = properties.reduce((sum, prop) => sum + (prop.contacts || 0), 0);
       
-      setStats({
+      setStats(prev => ({
+        ...prev,
         totalProperties: properties.length,
         totalViews,
         totalContacts
-      });
+      }));
     } catch (error) {
       console.error('Failed to fetch statistics:', error);
+    }
+  };
+
+  const fetchWishlistCount = async () => {
+    try {
+      const token = await getToken();
+      const response = await getWishlist(token);
+      const wishlistCount = (response.data || []).length;
+      
+      setStats(prev => ({
+        ...prev,
+        totalWishlist: wishlistCount
+      }));
+    } catch (error) {
+      console.error('Failed to fetch wishlist count:', error);
     }
   };
 
@@ -193,38 +213,58 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Statistics (For Providers Only) */}
-        {isProvider() && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Total Properties</p>
-                  <p className="text-3xl font-bold text-blue-600">{stats.totalProperties}</p>
-                </div>
-                <FaHome className="text-4xl text-blue-200" />
+        {/* Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* Wishlist - Show for everyone */}
+          <div 
+            onClick={() => navigate('/wishlist')}
+            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">My Wishlist</p>
+                <p className="text-3xl font-bold text-red-500">{stats.totalWishlist}</p>
               </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Total Views</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.totalViews}</p>
-                </div>
-                <FaEye className="text-4xl text-green-200" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Total Contacts</p>
-                  <p className="text-3xl font-bold text-purple-600">{stats.totalContacts}</p>
-                </div>
-                <FaEnvelopeOpen className="text-4xl text-purple-200" />
-              </div>
+              <FaHeart className="text-4xl text-red-200" />
             </div>
           </div>
-        )}
+
+          {/* Provider Stats */}
+          {isProvider() && (
+            <>
+              <div 
+                onClick={() => navigate('/my-properties')}
+                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-xl transition-shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Total Properties</p>
+                    <p className="text-3xl font-bold text-blue-600">{stats.totalProperties}</p>
+                  </div>
+                  <FaHome className="text-4xl text-blue-200" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Total Views</p>
+                    <p className="text-3xl font-bold text-green-600">{stats.totalViews}</p>
+                  </div>
+                  <FaEye className="text-4xl text-green-200" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Total Contacts</p>
+                    <p className="text-3xl font-bold text-purple-600">{stats.totalContacts}</p>
+                  </div>
+                  <FaEnvelopeOpen className="text-4xl text-purple-200" />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-md mb-6">

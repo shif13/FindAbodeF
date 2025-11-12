@@ -1,7 +1,8 @@
-// frontend/src/pages/Listings.jsx - COMPLETE FIXED VERSION
+// frontend/src/pages/Listings.jsx - COMPLETE FIXED VERSION WITH WISHLIST
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getAllProperties } from '../api/properties';
+import { getAllProperties, getWishlist } from '../api/properties';
+import { useAuth } from '../hooks/useAuth';
 import PropertyCard from '../components/PropertyCard';
 import SearchBar from '../components/SearchBar';
 import { toast } from 'react-toastify';
@@ -9,7 +10,9 @@ import { toast } from 'react-toastify';
 const Listings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, getToken } = useAuth();
   const [compareList, setCompareList] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -32,7 +35,21 @@ const Listings = () => {
   // Fetch properties on mount and when filters change
   useEffect(() => {
     fetchProperties(1);
-  }, []); // Only on mount
+    if (user) {
+      fetchWishlistIds();
+    }
+  }, [user]);
+
+  const fetchWishlistIds = async () => {
+    try {
+      const token = await getToken();
+      const response = await getWishlist(token);
+      const ids = (response.data || []).map(item => item.propertyId);
+      setWishlistIds(ids);
+    } catch (error) {
+      console.error('Failed to fetch wishlist:', error);
+    }
+  };
 
   const fetchProperties = async (page = 1) => {
     setLoading(true);
@@ -194,9 +211,13 @@ const Listings = () => {
                 <PropertyCard 
                   key={property.id} 
                   property={property}
-                  onWishlistChange={() => fetchProperties(pagination.page)}
+                  onWishlistChange={() => {
+                    fetchProperties(pagination.page);
+                    if (user) fetchWishlistIds();
+                  }}
                   compareList={compareList}
                   onCompareToggle={handleCompareToggle}
+                  wishlistIds={wishlistIds}
                 />
               ))}
             </div>

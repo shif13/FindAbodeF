@@ -73,6 +73,67 @@ const PostProperty = () => {
     'Air Conditioning', 'WiFi', 'Intercom', 'Gas Pipeline', 'Sewage Treatment'
   ];
 
+  // FREE geocoding using OpenStreetMap Nominatim (NO API KEY!)
+const geocodeAddress = async (address, city, state, pincode) => {
+  try {
+    const fullAddress = `${address}, ${city}, ${state}, ${pincode}, India`;
+    
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(fullAddress)}` +
+      `&format=json` +
+      `&limit=1` +
+      `&countrycodes=in`,
+      {
+        headers: {
+          'User-Agent': 'FindAbode Real Estate App'
+        }
+      }
+    );
+    
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      console.log('✅ Geocoding successful:', data[0]);
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon)
+      };
+    } else {
+      console.warn('⚠️ No exact match, trying city fallback...');
+      
+      // Fallback: Try with just city and state
+      const fallbackResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?` +
+        `q=${encodeURIComponent(`${city}, ${state}, India`)}` +
+        `&format=json` +
+        `&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'FindAbode Real Estate App'
+          }
+        }
+      );
+      
+      const fallbackData = await fallbackResponse.json();
+      
+      if (fallbackData && fallbackData.length > 0) {
+        toast.info('Using approximate city location');
+        return {
+          latitude: parseFloat(fallbackData[0].lat),
+          longitude: parseFloat(fallbackData[0].lon)
+        };
+      }
+      
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Geocoding error:', error);
+    toast.warning('Could not get location coordinates');
+    return null;
+  }
+};
+
   // Check permissions
   if (!userData) {
     return (
@@ -190,10 +251,26 @@ const PostProperty = () => {
 
       setUploadingImages(false);
 
+      toast.info('📍 Getting location coordinates...');
+const coords = await geocodeAddress(
+  formData.address,
+  formData.city,
+  formData.state,
+  formData.pincode
+);
+
+if (coords) {
+  toast.success('✅ Location found!');
+} else {
+  toast.warning('⚠️ Could not find exact location');
+}
+
       // Step 2: Prepare property data
       const propertyData = {
         ...formData,
         images: uploadResult.urls,
+        latitude: coords?.latitude || null, 
+        longitude: coords?.longitude || null,
         bedrooms: parseInt(formData.bedrooms) || 0,
         bathrooms: parseInt(formData.bathrooms) || 0,
         area: parseFloat(formData.area),

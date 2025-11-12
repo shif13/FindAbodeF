@@ -1,6 +1,7 @@
 // frontend/src/pages/PropertyDetails.jsx - IMPRESSIVE VERSION
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import PropertyMap from '../components/PropertyMap';
 import { getPropertyById } from '../api/properties';
 import { useAuth } from '../hooks/useAuth';
 import { useUser } from '../context/UserContext';
@@ -110,12 +111,12 @@ const PropertyDetails = () => {
       toast.error('Please select a reason');
       return;
     }
-    // TODO: Implement report API
     toast.success('Property reported. We will review it.');
     setShowReportModal(false);
     setReportReason('');
   };
 
+  
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -362,13 +363,45 @@ const PropertyDetails = () => {
               </div>
             )}
 
-            {/* Map - Placeholder */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Location</h2>
-              <div className="bg-gray-200 h-64 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Map integration coming soon</p>
-              </div>
-            </div>
+            {/* Location Map */}
+<div className="bg-white rounded-lg shadow-md p-6">
+  <h2 className="text-2xl font-bold text-gray-900 mb-4">Location</h2>
+  
+  {property.latitude && property.longitude ? (
+    <div>
+      <PropertyMap
+        latitude={property.latitude}
+        longitude={property.longitude}
+        address={`${property.address}, ${property.city}, ${property.state} - ${property.pincode}`}
+        title={property.title}
+        city={property.city}
+        state={property.state}
+      />
+      
+      {/* Address Details */}
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-start gap-3">
+          <FaMapMarkerAlt className="text-blue-600 mt-1 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-gray-900 mb-1">Full Address:</p>
+            <p className="text-gray-700">{property.address}</p>
+            <p className="text-gray-600 text-sm mt-1">
+              {property.city}, {property.state} - {property.pincode}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+      <div className="text-center">
+        <FaMapMarkerAlt className="text-gray-400 text-4xl mx-auto mb-3" />
+        <p className="text-gray-600 font-medium">Location coordinates not available</p>
+        <p className="text-gray-500 text-sm mt-1">Address: {property.address}, {property.city}</p>
+      </div>
+    </div>
+  )}
+</div>
           </div>
 
           {/* Right Column - Contact Card */}

@@ -10,7 +10,7 @@ import {
   FaCheckCircle, FaTimes, FaTrash, FaEye, FaFilter, FaSearch,
   FaBars, FaSortAmountDown, FaDownload, FaUserTie, FaHardHat,
   FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaEdit,
-  FaUserFriends, FaBuilding, FaExclamationTriangle, FaBan
+  FaUserFriends, FaBuilding, FaExclamationTriangle, FaBan, FaStar
 } from 'react-icons/fa';
 
 const AdminPanel = () => {
@@ -34,7 +34,8 @@ const AdminPanel = () => {
     totalProperties: 0,
     pendingProperties: 0,
     approvedProperties: 0,
-    rejectedProperties: 0
+    rejectedProperties: 0,
+    featuredProperties: 0 // NEW
   });
 
   // Filters
@@ -77,7 +78,7 @@ const AdminPanel = () => {
       const allUsers = usersResponse.data || [];
       setUsers(allUsers);
 
-      // Fetch properties (admin endpoint if available, otherwise regular)
+      // Fetch properties
       const propsResponse = await getAllProperties({});
       const allProps = propsResponse.data || [];
       setProperties(allProps);
@@ -91,7 +92,8 @@ const AdminPanel = () => {
         totalProperties: allProps.length,
         pendingProperties: allProps.filter(p => p.approvalStatus === 'pending').length,
         approvedProperties: allProps.filter(p => p.approvalStatus === 'approved').length,
-        rejectedProperties: allProps.filter(p => p.approvalStatus === 'rejected').length
+        rejectedProperties: allProps.filter(p => p.approvalStatus === 'rejected').length,
+        featuredProperties: allProps.filter(p => p.isFeatured || p.isAutoFeatured).length // NEW
       };
       setStats(stats);
     } catch (error) {
@@ -186,6 +188,34 @@ const AdminPanel = () => {
       fetchData();
     } catch (error) {
       toast.error('Failed to delete property');
+    }
+  };
+
+  // 🔥 NEW: Toggle Featured Status
+  const handleToggleFeatured = async (propertyId, currentStatus) => {
+    try {
+      const token = await getToken();
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5550';
+      
+      const response = await fetch(`${API_URL}/properties/admin/${propertyId}/toggle-featured`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to toggle featured status');
+      }
+
+      toast.success(data.message);
+      fetchData(); // Refresh data
+    } catch (error) {
+      toast.error(error.message || 'Failed to toggle featured status');
+      console.error('Toggle featured error:', error);
     }
   };
 
@@ -356,17 +386,17 @@ const AdminPanel = () => {
             <StatCard icon={FaHome} label="Total Props" value={stats.totalProperties} color="blue" />
             <StatCard icon={FaClock} label="Pending Props" value={stats.pendingProperties} color="yellow" />
             <StatCard icon={FaCheckCircle} label="Approved" value={stats.approvedProperties} color="green" />
-            <StatCard icon={FaTimesCircle} label="Rejected" value={stats.rejectedProperties} color="red" />
+            <StatCard icon={FaStar} label="Featured" value={stats.featuredProperties} color="orange" />
           </div>
 
-          {/* Tab Content */}
+          {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               <div className="bg-white rounded-lg shadow-md p-4 lg:p-6">
                 <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">Dashboard Overview</h2>
                 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -397,6 +427,23 @@ const AdminPanel = () => {
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
                       >
                         Review
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-orange-900">Featured Properties</h3>
+                        <p className="text-orange-700 text-sm mt-1">
+                          {stats.featuredProperties} currently featured
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('properties')}
+                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 text-sm"
+                      >
+                        Manage
                       </button>
                     </div>
                   </div>
@@ -438,7 +485,7 @@ const AdminPanel = () => {
               <div className="p-4 lg:p-6 border-b border-gray-200">
                 <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">User Management</h2>
                 
-                {/* Filters - Mobile Responsive */}
+                {/* Filters */}
                 <div className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
@@ -492,13 +539,12 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              {/* Users List - Mobile Responsive */}
+              {/* Users List */}
               <div className="p-4 lg:p-6">
                 <div className="space-y-3">
                   {filteredUsers.map((user) => (
                     <div key={user.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        {/* User Info */}
                         <div className="flex items-start gap-3 flex-1">
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                             {user.name[0]}
@@ -526,7 +572,6 @@ const AdminPanel = () => {
                           </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex flex-wrap gap-2">
                           {user.approvalStatus === 'pending' && (
                             <>
@@ -651,7 +696,7 @@ const AdminPanel = () => {
                             alt={property.title}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-3 left-3">
+                          <div className="absolute top-3 left-3 flex flex-col gap-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${
                               property.approvalStatus === 'approved' ? 'bg-green-600' :
                               property.approvalStatus === 'pending' ? 'bg-yellow-600' :
@@ -659,6 +704,19 @@ const AdminPanel = () => {
                             }`}>
                               {property.approvalStatus}
                             </span>
+                            {/* 🔥 NEW: Featured Badge */}
+                            {property.isFeatured && (
+                              <span className="px-2 py-1 rounded-full text-xs font-semibold text-white bg-orange-600 flex items-center gap-1">
+                                <FaStar className="text-xs" />
+                                Manual
+                              </span>
+                            )}
+                            {property.isAutoFeatured && !property.isFeatured && (
+                              <span className="px-2 py-1 rounded-full text-xs font-semibold text-white bg-purple-600 flex items-center gap-1">
+                                <FaStar className="text-xs" />
+                                Auto
+                              </span>
+                            )}
                           </div>
                           <div className="absolute top-3 right-3">
                             <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${
@@ -703,6 +761,19 @@ const AdminPanel = () => {
                                   <FaEye className="mr-1" />
                                   <span>{property.views || 0} views</span>
                                 </div>
+                                {property.wishlistCount > 0 && (
+                                  <div className="flex items-center">
+                                    <FaStar className="mr-1 text-yellow-500" />
+                                    <span>{property.wishlistCount} wishlisted</span>
+                                  </div>
+                                )}
+                                {property.featuredScore > 0 && (
+                                  <div className="flex items-center">
+                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                      Score: {property.featuredScore}
+                                    </span>
+                                  </div>
+                                )}
                                 <span>Posted {new Date(property.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
@@ -719,6 +790,7 @@ const AdminPanel = () => {
 
                           {/* Actions */}
                           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
+                            {/* Approval Actions */}
                             {property.approvalStatus === 'pending' && (
                               <>
                                 <button
@@ -737,6 +809,25 @@ const AdminPanel = () => {
                                 </button>
                               </>
                             )}
+                            
+                            {/* 🔥 NEW: Featured Toggle Button */}
+                            {property.approvalStatus === 'approved' && (
+                              <button
+                                onClick={() => handleToggleFeatured(property.id, property.isFeatured)}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                  property.isFeatured 
+                                    ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                                }`}
+                                title={property.isFeatured ? 'Remove from featured' : 'Mark as featured'}
+                              >
+                                <FaStar />
+                                <span className="hidden sm:inline">
+                                  {property.isFeatured ? 'Unfeature' : 'Feature'}
+                                </span>
+                              </button>
+                            )}
+                            
                             <a
                               href={`/property/${property.id}`}
                               target="_blank"

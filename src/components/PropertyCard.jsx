@@ -1,18 +1,29 @@
-// frontend/src/components/PropertyCard.jsx - FIXED VERSION
+// frontend/src/components/PropertyCard.jsx - FIXED VERSION WITH PROPER WISHLIST SYNC
 import { Link } from 'react-router-dom';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { addToWishlist, removeFromWishlist } from '../api/properties';
 import { toast } from 'react-toastify';
 
-const PropertyCard = ({ property, onWishlistChange, compareList, onCompareToggle }) => {
-  const [isWishlisted, setIsWishlisted] = useState(property.isWishlisted || false);
+const PropertyCard = ({ property, onWishlistChange, compareList, onCompareToggle, wishlistIds = [] }) => {
+  // Check if property is in wishlist based on parent's wishlist state
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, getToken } = useAuth();
 
+  // Sync with parent's wishlist state
+  useEffect(() => {
+    if (wishlistIds && wishlistIds.length > 0) {
+      setIsWishlisted(wishlistIds.includes(property.id));
+    } else {
+      setIsWishlisted(property.isWishlisted || false);
+    }
+  }, [wishlistIds, property.id, property.isWishlisted]);
+
   const handleWishlist = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!user) {
       toast.error('Please login to save properties');
@@ -68,14 +79,20 @@ const PropertyCard = ({ property, onWishlistChange, compareList, onCompareToggle
             className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
           />
           
-          {/* Wishlist Button */}
+          {/* Wishlist Button - Enhanced with animation */}
           <button
             onClick={handleWishlist}
             disabled={loading}
-            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            className={`absolute top-3 right-3 p-2 rounded-full shadow-lg transition-all duration-300 transform hover:scale-110 ${
+              isWishlisted 
+                ? 'bg-red-500 hover:bg-red-600' 
+                : 'bg-white hover:bg-gray-100'
+            }`}
           >
-            {isWishlisted ? (
-              <FaHeart className="text-red-500 text-xl" />
+            {loading ? (
+              <div className="animate-spin h-5 w-5 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+            ) : isWishlisted ? (
+              <FaHeart className="text-white text-xl animate-pulse" />
             ) : (
               <FaRegHeart className="text-gray-600 text-xl" />
             )}
@@ -114,13 +131,22 @@ const PropertyCard = ({ property, onWishlistChange, compareList, onCompareToggle
 
         {/* Content */}
         <div className="p-4">
+        
           {/* Price */}
           <div className="mb-2">
-            <span className="text-2xl font-bold text-blue-600">
-              {displayPrice ? formatPrice(displayPrice) : 'Price Not Available'}
-            </span>
-            {property.listingType === 'rent' && (
-              <span className="text-gray-500 text-sm">/month</span>
+            {displayPrice && displayPrice > 0 ? (
+              <>
+                <span className="text-2xl font-bold text-blue-600">
+                  {formatPrice(displayPrice)}
+                </span>
+                {property.listingType === 'rent' && (
+                  <span className="text-gray-500 text-sm">/month</span>
+                )}
+              </>
+            ) : (
+              <span className="text-lg font-semibold text-gray-500">
+                Contact for Price
+              </span>
             )}
           </div>
 
